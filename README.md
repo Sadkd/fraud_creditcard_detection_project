@@ -7,8 +7,22 @@ This project explores and compares multiple machine learning models for bank fra
 As fraudulent behaviors grow increasingly sophisticated, traditional rule-based detection methods struggle to keep pace with the rapid expansion of electronic payments and online commerce. Machine learning offers a powerful alternative — systems capable of learning directly from historical data to identify suspicious patterns with greater accuracy and adaptability.
 
 ---
+## System Architecture
 
-## Data flow:
+```mermaid
+flowchart LR
+    A["🏦 Transaction Source\n(CSV file / Payment Terminal)"]
+    B["📨 Kafka Producer\n(Python script)\nConverts rows → JSON messages"]
+    C[("Apache Kafka\nTopic: transactions")]
+    D["⚡ Spark Structured Streaming\nConsumer\n• JSON deserialization\n• VectorAssembler\n• XGBoost inference\n• foreachBatch micro-batching"]
+    E["📊 Outputs & Decisions\n• Fraud alerts\n• Dashboard / DB\n• Alert system"]
+
+    A -->|"Simulated live feed\n(1 transaction/sec)"| B
+    B -->|"Publish"| C
+    C -->|"Subscribe & stream"| D
+    D -->|"fraud_proba > 0.9 → FRAUD"| E
+```
+**Data flow:**
 
 1. A **Kafka Producer** reads transactions from a CSV file row-by-row, converts each to JSON, and publishes it to a Kafka topic — simulating a live payment terminal.
 2. **Spark Structured Streaming** subscribes to that topic, deserializes the JSON, assembles feature vectors with `VectorAssembler`, loads the pre-trained XGBoost model, and runs inference on each micro-batch.
@@ -16,7 +30,7 @@ As fraudulent behaviors grow increasingly sophisticated, traditional rule-based 
 
 ---
 
-## 📊 Dataset
+## Dataset
 
 | Property | Value |
 |---|---|
@@ -44,7 +58,7 @@ Original dataset (284,807 rows)
 
 ---
 
-## 🏆 Model Performance
+## Model Performance
 
 All models were evaluated on a held-out validation set using Accuracy, Precision, Recall, and F1-score.
 
@@ -57,7 +71,7 @@ All models were evaluated on a held-out validation set using Accuracy, Precision
 | Random Forest | 97.50% | 92.00% | 94.00% | 93.00% | Minimal |
 | Isolation Forest | 96.00% | 60.00% | 85.00% | 69.11% | Negligible |
 
-> **Why XGBoost?** It achieved **zero false negatives** on the validation set (recall = 100%) — meaning no fraudulent transaction was missed. Its gradient boosting mechanism with built-in regularization makes it both highly accurate and resistant to overfitting, as confirmed by the near-identical train/validation F1-scores (99.85% vs 99.64%).
+> **best model?** XGboost achieved **zero false negatives** on the validation set (recall = 100%) — meaning no fraudulent transaction was missed. Its gradient boosting mechanism with built-in regularization makes it both highly accurate and resistant to overfitting, as confirmed by the near-identical train/validation F1-scores (99.85% vs 99.64%).
 
 ---
 
@@ -179,9 +193,9 @@ Rows in batch: 4 | TOTAL rows seen: 23,990 | TOTAL fraud predicted: 1,702
 
 ---
 
-## 🔬 Technical Deep Dive
+## Technical insights
 
-### Why Kafka + Spark Structured Streaming?
+### Why the use of Kafka + Spark Structured Streaming?
 
 Traditional batch processing waits until a full dataset is available before running predictions — unacceptable in banking where a fraudulent transaction must be blocked **before** it is authorized.
 
@@ -194,7 +208,7 @@ Traditional batch processing waits until a full dataset is available before runn
 
 **Micro-batching** (Spark's approach) groups arriving Kafka messages into small time windows (e.g., every 500ms), applies the full preprocessing + inference pipeline via `foreachBatch`, and emits results — achieving near-real-time latency with the reliability guarantees of batch processing.
 
-### Decision Threshold: Why 0.9?
+### Decision Threshold: choice of 0.9?
 
 XGBoost outputs a probability score `fraud_proba ∈ [0, 1]`. Rather than using the default 0.5 cutoff, we set the threshold to **0.9** because:
 
@@ -202,7 +216,7 @@ XGBoost outputs a probability score `fraud_proba ∈ [0, 1]`. Rather than using 
 
 ---
 
-## 📈 Results
+## Results
 
 The real-time deployment confirmed the model's production viability:
 
@@ -215,9 +229,9 @@ The gap between the training F1-score (99.85%) and validation F1-score (99.64%) 
 
 ---
 
-## 👩‍💻 Authors
+## Authors
 
-This project was developed as part of the **Master MIATE** (Intelligence Artificielle et Technologies Émergentes) program at the **Faculté Pluridisciplinaire de Nador, Université Mohammed Premier** — academic year 2024–2025.
+This project was developed as part of the **Master MIATE** (Intelligence Artificielle et Technologies Émergentes) program at the **Faculté Pluridisciplinaire de Nador, Université Mohammed Premier** — academic year 2025–2026.
 
 | Name | Role |
 |---|---|

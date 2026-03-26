@@ -1,61 +1,14 @@
-# 🛡️ Real-Time Credit Card Fraud Detection
+# Real-Time Credit Card Fraud Detection
 ### A production-grade ML pipeline using Apache Kafka · Apache Spark Streaming · XGBoost
 
-[![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![Apache Spark](https://img.shields.io/badge/Apache%20Spark-3.x-E25A1C?style=flat-square&logo=apachespark&logoColor=white)](https://spark.apache.org)
-[![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-3.x-231F20?style=flat-square&logo=apachekafka&logoColor=white)](https://kafka.apache.org)
-[![XGBoost](https://img.shields.io/badge/XGBoost-1.7+-189AB4?style=flat-square)](https://xgboost.readthedocs.io)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-
-> A Master's-level research project (MIATE — Université Mohammed Premier) that detects fraudulent bank card transactions **in real time** by combining a high-performance XGBoost classifier (99.96% accuracy, 100% recall) with a scalable Kafka + Spark Structured Streaming architecture.
+---
+## Description
+This project explores and compares multiple machine learning models for bank fraud detection, built with PySpark and designed to handle the inherent class imbalance typical of real-world fraud datasets.
+As fraudulent behaviors grow increasingly sophisticated, traditional rule-based detection methods struggle to keep pace with the rapid expansion of electronic payments and online commerce. Machine learning offers a powerful alternative — systems capable of learning directly from historical data to identify suspicious patterns with greater accuracy and adaptability.
 
 ---
 
-## 📑 Table of Contents
-
-1. [Project Overview](#-project-overview)
-2. [System Architecture](#-system-architecture)
-3. [Dataset](#-dataset)
-4. [Model Performance](#-model-performance)
-5. [Installation](#-installation)
-6. [Running the Pipeline](#-running-the-pipeline)
-7. [Technical Deep Dive](#-technical-deep-dive)
-8. [Results](#-results)
-9. [Authors](#-authors)
-10. [References](#-references)
-
----
-
-## 🎯 Project Overview
-
-Banking fraud is a growing threat in the era of electronic payments. Traditional rule-based systems struggle to keep pace with evolving fraud patterns. This project addresses that gap by:
-
-- Training and comparing **6 ML models** on a heavily imbalanced real-world dataset
-- Applying a **combined rebalancing strategy** (under-sampling + over-sampling + sample weights)
-- Deploying the best model (**XGBoost**) inside a **real-time streaming pipeline** using Kafka and Spark Structured Streaming
-- Applying a **decision threshold of 0.9** to minimize missed fraud (false negatives), reflecting the real business cost of undetected fraud
-
-The final system processes transactions as they arrive, assigns a fraud probability to each, and flags suspicious ones — all within milliseconds.
-
----
-
-## 🏗️ System Architecture
-
-```mermaid
-flowchart LR
-    A["🏦 Transaction Source\n(CSV file / Payment Terminal)"]
-    B["📨 Kafka Producer\n(Python script)\nConverts rows → JSON messages"]
-    C[("Apache Kafka\nTopic: transactions")]
-    D["⚡ Spark Structured Streaming\nConsumer\n• JSON deserialization\n• VectorAssembler\n• XGBoost inference\n• foreachBatch micro-batching"]
-    E["📊 Outputs & Decisions\n• Fraud alerts\n• Dashboard / DB\n• Alert system"]
-
-    A -->|"Simulated live feed\n(1 transaction/sec)"| B
-    B -->|"Publish"| C
-    C -->|"Subscribe & stream"| D
-    D -->|"fraud_proba > 0.9 → FRAUD"| E
-```
-
-**Data flow in plain English:**
+## Data flow:
 
 1. A **Kafka Producer** reads transactions from a CSV file row-by-row, converts each to JSON, and publishes it to a Kafka topic — simulating a live payment terminal.
 2. **Spark Structured Streaming** subscribes to that topic, deserializes the JSON, assembles feature vectors with `VectorAssembler`, loads the pre-trained XGBoost model, and runs inference on each micro-batch.
